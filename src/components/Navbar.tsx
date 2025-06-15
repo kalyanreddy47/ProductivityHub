@@ -1,17 +1,31 @@
 
 import { Link, useLocation } from "react-router-dom";
-import { ArrowRight } from "lucide-react";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
 
 const navLinks = [
   { label: "Home", to: "/" },
   { label: "Book Summaries", to: "/books" },
   { label: "Articles", to: "/articles" },
   { label: "Tools", to: "/tools" },
-  { label: "Pomodoro Timer", to: "/pomodoro" }
+  { label: "Pomodoro Timer", to: "/pomodoro" },
+  { label: "Pricing", to: "/pricing" },
+  { label: "Login", to: "/login" },
 ];
 
 export default function Navbar() {
   const location = useLocation();
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+    supabase.auth.getSession().then(({ data: { session } }) => setUser(session?.user ?? null));
+    return () => sub?.unsubscribe();
+  }, []);
+
   return (
     <nav className="w-full sticky top-0 z-20 bg-white/95 backdrop-blur-sm border-b border-gray-100 shadow-sm">
       <div className="flex items-center justify-between max-w-7xl mx-auto px-4 py-3">
@@ -31,11 +45,20 @@ export default function Navbar() {
               </Link>
             </li>
           ))}
+          {user && (
+            <li>
+              <Button
+                size="sm"
+                className="bg-primary font-semibold text-white hover:bg-primary-dark ml-3"
+                asChild
+              >
+                <Link to="/pricing">Upgrade</Link>
+              </Button>
+            </li>
+          )}
         </ul>
-        {/* Mobile menu: Will be handled in V2 for simplicity */}
-        <div className="md:hidden">
-          {/* No mobile menu for version 1 */}
-        </div>
+        {/* Mobile menu - could be added here in the future */}
+        <div className="md:hidden"></div>
       </div>
     </nav>
   );
